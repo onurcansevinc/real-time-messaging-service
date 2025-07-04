@@ -128,4 +128,46 @@ router.post('/send', authenticateToken, validateMessage, async (req, res) => {
     }
 });
 
+router.get('/:conversationId', authenticateToken, async (req, res) => {
+    try {
+        const conversationId = req.params.conversationId;
+
+        const conversation = await Conversation.findById(conversationId);
+        if (!conversation) return res.status(404).json({ success: false, error: 'Conversation not found' });
+
+        const isParticipant = conversation.participants.some((p) => p._id.toString() === req.user._id.toString());
+        if (!isParticipant)
+            return res.status(403).json({ success: false, error: 'You are not a participant of this conversation' });
+
+        const messages = await Message.find({ conversation: conversationId }).populate('sender', 'username avatar');
+        return res.json({ success: true, data: messages });
+    } catch (error) {
+        console.error('Get messages error:', error);
+        return res.status(500).json({ success: false, error: 'Server error' });
+    }
+});
+
+router.put('/:messageId/read', authenticateToken, async (req, res) => {
+    try {
+        const messageId = req.params.messageId;
+        const message = await Message.findById(messageId);
+        if (!message) return res.status(404).json({ success: false, error: 'Message not found' });
+
+        const conversation = await Conversation.findById(message.conversation);
+        if (!conversation) return res.status(404).json({ success: false, error: 'Conversation not found' });
+
+        const isParticipant = conversation.participants.some((p) => p._id.toString() === req.user._id.toString());
+        if (!isParticipant)
+            return res.status(403).json({ success: false, error: 'You are not a participant of this conversation' });
+
+        message.readBy.push(req.user._id);
+        await message.save();
+
+        return res.json({ success: true, message: 'Message marked as read' });
+    } catch (error) {
+        console.error('Mark message as read error:', error);
+        return res.status(500).json({ success: false, error: 'Server error' });
+    }
+});
+
 module.exports = router;
