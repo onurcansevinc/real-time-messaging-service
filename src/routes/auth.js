@@ -30,12 +30,13 @@ router.post('/register', validateRegistration, async (req, res) => {
         const { username, email, password } = req.body;
 
         // Check if user already exists
-        const existingUser = await User.findOne({ email });
+        const userEmail = email.toLowerCase();
+        const existingUser = await User.findOne({ $or: [{ email: userEmail }, { username }] }); // $or: or
         if (existingUser) return res.status(400).json({ success: false, error: 'User already exists' });
 
         // Hash password and create user
         const hashedPassword = await bcrypt.hash(password, 12);
-        const user = new User({ username, email, password: hashedPassword });
+        const user = new User({ username, email: userEmail, password: hashedPassword });
         await user.save();
 
         return res.status(201).json({
