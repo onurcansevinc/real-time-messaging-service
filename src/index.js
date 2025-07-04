@@ -10,6 +10,8 @@ const { connectRedis } = require('./config/redis');
 
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
+const messagesRoutes = require('./routes/messages');
+const conversationsRoutes = require('./routes/conversations');
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' })); // 10mb limit for json
@@ -18,6 +20,8 @@ app.use(express.urlencoded({ extended: true })); // extended: true for urlencode
 // Routes
 app.use('/auth', authRoutes);
 app.use('/user', userRoutes);
+app.use('/messages', messagesRoutes);
+app.use('/conversations', conversationsRoutes);
 
 const server = app.listen(PORT, async () => {
     try {

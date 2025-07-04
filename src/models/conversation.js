@@ -40,6 +40,47 @@ const conversationSchema = new mongoose.Schema(
 conversationSchema.index({ participants: 1 });
 conversationSchema.index({ lastMessageAt: -1 });
 
+// Static method to get user conversations
+conversationSchema.statics.getUserConversations = function (userId, page = 1, limit = 20) {
+    return this.find({
+        participants: userId,
+        isActive: true,
+    })
+        .populate('participants', 'username avatar isOnline lastSeen')
+        .populate({
+            path: 'lastMessage',
+            select: 'content sender createdAt',
+            populate: {
+                path: 'sender',
+                select: 'username avatar',
+            },
+        })
+        .sort({ lastMessageAt: -1 })
+        .limit(limit * 1)
+        .skip((page - 1) * limit)
+        .lean(); // lean(): returns plain JavaScript objects instead of Mongoose documents
+};
+
+// Static method to find or create direct conversation
+conversationSchema.statics.findOrCreateDirect = async function (user1Id, user2Id) {
+    // Find existing direct conversation
+    let conversation = await this.findOne({
+        participants: { $all: [user1Id, user2Id] }, // $all: all of the participants
+        isActive: true,
+    });
+
+    // Create new conversation if not exists
+    if (!conversation) {
+        conversation = new this({ participants: [user1Id, user2Id] });
+        await conversation.save();
+
+        // Populate participants
+        conversation = await this.findById(conversation._id).populate('participants', 'username avatar');
+    }
+
+    return conversation;
+};
+
 const Conversation = mongoose.model('Conversation', conversationSchema);
 
 module.exports = Conversation;

@@ -48,6 +48,15 @@ const messageSchema = new mongoose.Schema(
 messageSchema.index({ conversation: 1, createdAt: -1 });
 messageSchema.index({ sender: 1 });
 
+// Static method to get unread count for a conversation
+messageSchema.statics.getUnreadCount = async function (userId, conversationId) {
+    const messages = await this.find({
+        conversation: conversationId,
+        readBy: { $ne: userId }, // $ne: not equal to
+    });
+    return messages.length;
+};
+
 const Message = mongoose.model('Message', messageSchema);
 
 module.exports = Message;
