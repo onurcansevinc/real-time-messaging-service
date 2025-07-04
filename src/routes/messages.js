@@ -64,12 +64,11 @@ router.post('/send', authenticateToken, validateMessage, async (req, res) => {
             sender: req.user._id,
         });
 
+        await message.save();
         await Conversation.findByIdAndUpdate(conversationId, {
             lastMessage: message._id,
             lastMessageAt: new Date(),
         });
-
-        await message.save();
 
         return res.json({
             success: true,
@@ -160,8 +159,7 @@ router.put('/:messageId/read', authenticateToken, async (req, res) => {
         if (!isParticipant)
             return res.status(403).json({ success: false, error: 'You are not a participant of this conversation' });
 
-        message.readBy.push(req.user._id);
-        await message.save();
+        await message.markAsRead(req.user._id);
 
         return res.json({ success: true, message: 'Message marked as read' });
     } catch (error) {

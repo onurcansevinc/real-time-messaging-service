@@ -57,6 +57,11 @@ messageSchema.statics.getUnreadCount = async function (userId, conversationId) {
     return messages.length;
 };
 
+messageSchema.methods.markAsRead = async function (userId) {
+    this.readBy.push({ user: userId, readAt: new Date() });
+    await this.save();
+};
+
 const Message = mongoose.model('Message', messageSchema);
 
 module.exports = Message;
