@@ -5,6 +5,7 @@ const { body, validationResult } = require('express-validator');
 
 const router = express.Router();
 const User = require('../models/user');
+const TokenService = require('../services/tokenService');
 const { authenticateToken } = require('../middleware/auth');
 
 // Validation middleware
@@ -89,6 +90,10 @@ router.post('/login', validateLogin, async (req, res) => {
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) return res.status(400).json({ success: false, error: 'Invalid credentials' });
 
+        // Add old token to blacklist
+        const [_, token] = req.headers.authorization?.split(' ') || [];
+        if (token) await TokenService.blacklistToken(token);
+
         // Generate JWT tokens
         const accessToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
         return res.json({ success: true, message: 'Login successful', accessToken });
@@ -101,11 +106,12 @@ router.post('/login', validateLogin, async (req, res) => {
 // Refresh the access token
 router.post('/refresh', authenticateToken, async (req, res) => {
     try {
-        const user = req.user;
-        if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+        // Add old token to blacklist
+        const [_, token] = req.headers.authorization.split(' ');
+        await TokenService.blacklistToken(token);
 
         // Generate new access token
-        const accessToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+        const accessToken = jwt.sign({ userId: req.user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
         return res.json({ success: true, message: 'Token refreshed successfully', accessToken });
     } catch (error) {
         console.error('Token refresh error:', error);
@@ -116,7 +122,10 @@ router.post('/refresh', authenticateToken, async (req, res) => {
 // Logout a user and remove the token
 router.post('/logout', authenticateToken, async (req, res) => {
     try {
-        // TODO: Implement logout logic (blacklist token, clear session, etc.)
+        // Add old token to blacklist
+        const [_, token] = req.headers.authorization.split(' ');
+        await TokenService.blacklistToken(token);
+
         return res.json({ success: true, message: 'Logout successful' });
     } catch (error) {
         console.error('Logout error:', error);

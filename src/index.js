@@ -7,6 +7,7 @@ const PORT = process.env.PORT || 3000;
 
 const authRoutes = require('./routes/auth');
 const connectDB = require('./config/database');
+const { connectRedis } = require('./config/redis');
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' })); // 10mb limit for json
@@ -19,6 +20,7 @@ const server = app.listen(PORT, async () => {
     try {
         // Connect to databases
         await connectDB();
+        await connectRedis();
 
         logger.info(`Server running on port ${PORT}`);
     } catch (error) {

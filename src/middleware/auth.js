@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
+const { redisServices } = require('../config/redis');
 
 /**
  * Authentication middleware
@@ -37,6 +38,10 @@ const authenticateToken = async (req, res, next) => {
                 message: 'No token provided',
             });
         }
+
+        // Check if token is blacklisted
+        const isBlacklisted = await redisServices.blacklist.isBlacklisted(accessToken);
+        if (isBlacklisted) return res.status(401).json({ success: false, error: 'Token is blacklisted' });
 
         // Verify token
         const decoded = jwt.verify(accessToken, process.env.JWT_SECRET);
