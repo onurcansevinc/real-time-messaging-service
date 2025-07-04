@@ -1,3 +1,4 @@
+const logger = require('./utils/logger');
 const express = require('express');
 const app = express();
 require('dotenv').config();
@@ -13,6 +14,19 @@ app.use(express.urlencoded({ extended: true })); // extended: true for urlencode
 // Routes
 app.use('/auth', authRoutes);
 
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+const server = app.listen(PORT, async () => {
+    try {
+        // Connect to databases
+        // await connectDB();
+
+        logger.info(`Server running on port ${PORT}`);
+    } catch (error) {
+        logger.error('Failed to start server:', error);
+        process.exit(1);
+    }
+});
+
+server.on('error', (error) => {
+    logger.error('Server error:', error);
+    process.exit(1);
 });
