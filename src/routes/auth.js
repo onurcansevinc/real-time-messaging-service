@@ -1,7 +1,11 @@
 const express = require('express');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 
 const router = express.Router();
+const User = require('../models/user');
+const { authenticateToken } = require('../middleware/auth');
 
 // Validation middleware
 const validateRegistration = [
@@ -20,20 +24,53 @@ router.post('/register', validateRegistration, async (req, res) => {
     try {
         // Check for validation errors
         const errors = validationResult(req);
-        if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+        if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
 
         const { username, email, password } = req.body;
 
-        // TODO: Check if user already exists
+        // Check if user already exists
+        const existingUser = await User.findOne({ email });
+        if (existingUser) return res.status(400).json({ success: false, error: 'User already exists' });
 
-        // TODO: Hash password and create user
+        // Hash password and create user
+        const hashedPassword = await bcrypt.hash(password, 12);
+        const user = new User({ username, email, password: hashedPassword });
+        await user.save();
 
-        // TODO: Generate JWT tokens
-
-        return res.status(201).json({ message: 'User registered successfully' });
+        return res.status(201).json({
+            success: true,
+            message: 'User registered successfully',
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+            },
+        });
     } catch (error) {
         console.error('Registration error:', error);
-        return res.status(500).json({ error: 'Server error' });
+
+        if (error.name === 'ValidationError') {
+            const validationErrors = {};
+
+            // Extract field-specific errors
+            Object.keys(error.errors).forEach((field) => {
+                validationErrors[field] = error.errors[field].message;
+            });
+
+            return res.status(400).json({
+                success: false,
+                error: 'Validation failed',
+                message: 'Please check your input data',
+                details: validationErrors,
+            });
+        }
+
+        // Handle other errors
+        return res.status(500).json({
+            success: false,
+            error: 'Server error',
+            message: 'An unexpected error occurred. Please try again later.',
+        });
     }
 });
 
@@ -41,56 +78,70 @@ router.post('/register', validateRegistration, async (req, res) => {
 router.post('/login', validateLogin, async (req, res) => {
     try {
         const errors = validationResult(req);
-        if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+        if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
 
         const { email, password } = req.body;
 
-        // TODO: Find user and verify password
+        // Find user and verify password
+        const user = await User.findOne({ email }).select('+password');
+        if (!user) return res.status(400).json({ success: false, error: 'Invalid credentials' });
 
-        // TODO: Generate JWT tokens
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) return res.status(400).json({ success: false, error: 'Invalid credentials' });
 
-        return res.json({ message: 'Login successful' });
+        // Generate JWT tokens
+        const accessToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        return res.json({ success: true, message: 'Login successful', accessToken });
     } catch (error) {
         console.error('Login error:', error);
-        return res.status(500).json({ error: 'Server error' });
+        return res.status(500).json({ success: false, error: 'Server error' });
     }
 });
 
 // Refresh the access token
-router.post('/refresh', async (req, res) => {
+router.post('/refresh', authenticateToken, async (req, res) => {
     try {
-        const { refreshToken } = req.body;
-        if (!refreshToken) return res.status(400).json({ error: 'Refresh token is required' });
+        const user = req.user;
+        if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
-        // TODO: Verify refresh token and generate new access token
-        return res.json({ message: 'Token refreshed successfully' });
+        // Generate new access token
+        const accessToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+        return res.json({ success: true, message: 'Token refreshed successfully', accessToken });
     } catch (error) {
         console.error('Token refresh error:', error);
-        return res.status(401).json({ error: 'Invalid refresh token' });
+        return res.status(401).json({ success: false, error: 'Invalid refresh token' });
     }
 });
 
 // Logout a user and remove the token
-router.post('/logout', async (req, res) => {
+router.post('/logout', authenticateToken, async (req, res) => {
     try {
         // TODO: Implement logout logic (blacklist token, clear session, etc.)
-
-        return res.json({ message: 'Logout successful' });
+        return res.json({ success: true, message: 'Logout successful' });
     } catch (error) {
         console.error('Logout error:', error);
-        return res.status(500).json({ error: 'Server error' });
+        return res.status(500).json({ success: false, error: 'Server error' });
     }
 });
 
 // Get the user details
-router.get('/me', async (req, res) => {
+router.get('/me', authenticateToken, async (req, res) => {
     try {
-        // TODO: Get user from auth middleware
+        const user = req.user;
+        if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
-        return res.json({ message: 'User profile retrieved' });
+        return res.json({
+            success: true,
+            message: 'User profile retrieved',
+            user: {
+                id: req.user._id,
+                username: req.user.username,
+                email: req.user.email,
+            },
+        });
     } catch (error) {
         console.error('Get profile error:', error);
-        return res.status(500).json({ error: 'Server error' });
+        return res.status(500).json({ success: false, error: 'Server error' });
     }
 });
 

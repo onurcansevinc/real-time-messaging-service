@@ -6,6 +6,7 @@ require('dotenv').config();
 const PORT = process.env.PORT || 3000;
 
 const authRoutes = require('./routes/auth');
+const connectDB = require('./config/database');
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' })); // 10mb limit for json
@@ -17,7 +18,7 @@ app.use('/auth', authRoutes);
 const server = app.listen(PORT, async () => {
     try {
         // Connect to databases
-        // await connectDB();
+        await connectDB();
 
         logger.info(`Server running on port ${PORT}`);
     } catch (error) {
