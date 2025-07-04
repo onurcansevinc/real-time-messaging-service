@@ -18,10 +18,10 @@ app.use(express.json({ limit: '10mb' })); // 10mb limit for json
 app.use(express.urlencoded({ extended: true })); // extended: true for urlencoded
 
 // Routes
-app.use('/auth', authRoutes);
-app.use('/user', userRoutes);
-app.use('/messages', messagesRoutes);
-app.use('/conversations', conversationsRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/user', userRoutes);
+app.use('/api/messages', messagesRoutes);
+app.use('/api/conversations', conversationsRoutes);
 
 const server = app.listen(PORT, async () => {
     try {
