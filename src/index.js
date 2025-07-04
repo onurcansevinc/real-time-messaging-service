@@ -5,9 +5,11 @@ require('dotenv').config();
 
 const PORT = process.env.PORT || 3000;
 
-const authRoutes = require('./routes/auth');
 const connectDB = require('./config/database');
 const { connectRedis } = require('./config/redis');
+
+const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/user');
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' })); // 10mb limit for json
@@ -15,6 +17,7 @@ app.use(express.urlencoded({ extended: true })); // extended: true for urlencode
 
 // Routes
 app.use('/auth', authRoutes);
+app.use('/user', userRoutes);
 
 const server = app.listen(PORT, async () => {
     try {

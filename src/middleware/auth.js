@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
-const { redisServices } = require('../config/redis');
+const TokenService = require('../services/tokenService');
 
 /**
  * Authentication middleware
@@ -40,14 +40,14 @@ const authenticateToken = async (req, res, next) => {
         }
 
         // Check if token is blacklisted
-        const isBlacklisted = await redisServices.blacklist.isBlacklisted(accessToken);
+        const isBlacklisted = await TokenService.isBlacklisted(accessToken);
         if (isBlacklisted) return res.status(401).json({ success: false, error: 'Token is blacklisted' });
 
         // Verify token
         const decoded = jwt.verify(accessToken, process.env.JWT_SECRET);
 
         // Check if user still exists in database
-        const user = await User.findById(decoded.userId).select('-password -refreshTokens');
+        const user = await User.findById(decoded.userId).select('-password');
 
         if (!user) {
             return res.status(401).json({

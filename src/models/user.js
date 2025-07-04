@@ -41,16 +41,6 @@ const userSchema = new mongoose.Schema(
             type: Boolean,
             default: true,
         },
-        refreshTokens: [
-            {
-                token: String,
-                createdAt: {
-                    type: Date,
-                    default: Date.now,
-                    expires: 7 * 24 * 60 * 60, // 7 days
-                },
-            },
-        ],
     },
     {
         timestamps: true, // Adds createdAt and updatedAt fields
