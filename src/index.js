@@ -7,6 +7,7 @@ const PORT = process.env.PORT || 3000;
 
 const connectDB = require('./config/database');
 const { connectRedis } = require('./config/redis');
+const { connectRabbitMQ } = require('./config/rabbitmq');
 
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
@@ -30,6 +31,7 @@ const server = app.listen(PORT, async () => {
         // Connect to databases
         await connectDB();
         await connectRedis();
+        await connectRabbitMQ();
         initializeSocket(server);
 
         logger.info(`Server running on port ${PORT}`);
