@@ -13,6 +13,8 @@ const userRoutes = require('./routes/user');
 const messagesRoutes = require('./routes/messages');
 const conversationsRoutes = require('./routes/conversations');
 
+const { initializeSocket } = require('./socket');
+
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' })); // 10mb limit for json
 app.use(express.urlencoded({ extended: true })); // extended: true for urlencoded
@@ -28,6 +30,7 @@ const server = app.listen(PORT, async () => {
         // Connect to databases
         await connectDB();
         await connectRedis();
+        initializeSocket(server);
 
         logger.info(`Server running on port ${PORT}`);
     } catch (error) {
