@@ -1,11 +1,13 @@
 const jwt = require('jsonwebtoken');
 const socketIO = require('socket.io');
-const { getRedisClient } = require('../config/redis');
 
 const User = require('../models/user');
 const logger = require('../utils/logger');
-const TokenService = require('../services/tokenService');
+
+const messageHandler = require('./events/message');
 const connectionHandler = require('./events/connection');
+const TokenService = require('../services/tokenService');
+const conversationHandler = require('./events/conversation');
 
 let io;
 
@@ -52,7 +54,9 @@ const initializeSocket = (server) => {
     io.on('connection', async (socket) => {
         console.log(`User connected: ${socket.user.username} (${socket.user._id})`);
 
+        messageHandler(socket, io);
         connectionHandler(socket, io);
+        conversationHandler(socket, io);
     });
 
     return io;
