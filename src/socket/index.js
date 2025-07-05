@@ -8,6 +8,7 @@ const typingHandler = require('./events/typing');
 const messageHandler = require('./events/message');
 const connectionHandler = require('./events/connection');
 const TokenService = require('../services/tokenService');
+const onlineUsersHandler = require('./events/onlineUsers');
 const conversationHandler = require('./events/conversation');
 
 let io;
@@ -58,6 +59,7 @@ const initializeSocket = (server) => {
         typingHandler(socket, io);
         messageHandler(socket, io);
         connectionHandler(socket, io);
+        onlineUsersHandler(socket, io);
         conversationHandler(socket, io);
     });
 
