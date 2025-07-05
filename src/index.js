@@ -17,17 +17,28 @@ const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
 const messagesRoutes = require('./routes/messages');
 const conversationsRoutes = require('./routes/conversations');
+
 const { notFoundHandler } = require('./middleware/errorHandler');
+const { generalLimiter, authLimiter, messageLimiter } = require('./middleware/rateLimiter');
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' })); // 10mb limit for json
 app.use(express.urlencoded({ extended: true })); // extended: true for urlencoded
 
+// health check
+app.get('/api/health', generalLimiter, (req, res) => {
+    res.status(200).json({
+        success: true,
+        message: 'Server is running',
+        timestamp: new Date().toISOString(),
+    });
+});
+
 // Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/user', userRoutes);
-app.use('/api/messages', messagesRoutes);
-app.use('/api/conversations', conversationsRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/user', generalLimiter, userRoutes);
+app.use('/api/messages', messageLimiter, messagesRoutes);
+app.use('/api/conversations', generalLimiter, conversationsRoutes);
 
 app.use(notFoundHandler);
 
