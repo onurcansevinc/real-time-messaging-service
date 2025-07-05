@@ -9,12 +9,13 @@ const connectDB = require('./config/database');
 const { connectRedis } = require('./config/redis');
 const { connectRabbitMQ } = require('./config/rabbitmq');
 
+const { initializeSocket } = require('./socket');
+const MessageConsumer = require('./services/messageConsumer');
+
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
 const messagesRoutes = require('./routes/messages');
 const conversationsRoutes = require('./routes/conversations');
-
-const { initializeSocket } = require('./socket');
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' })); // 10mb limit for json
@@ -32,6 +33,9 @@ const server = app.listen(PORT, async () => {
         await connectDB();
         await connectRedis();
         await connectRabbitMQ();
+
+        // Start message consumer
+        await MessageConsumer.startConsuming();
         initializeSocket(server);
 
         logger.info(`Server running on port ${PORT}`);

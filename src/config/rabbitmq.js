@@ -11,9 +11,10 @@ const connectRabbitMQ = async () => {
         channel = await connection.createChannel();
 
         await channel.assertQueue('message_sending_queue');
-        logger.info('Connected to RabbitMQ');
+        await channel.assertQueue('message_retry_queue');
+        await channel.assertQueue('message_dlq_queue');
 
-        channel.sendToQueue('message_sending_queue', Buffer.from('Hello World'));
+        logger.info('Connected to RabbitMQ');
     } catch (error) {
         logger.error(error);
         throw error;

@@ -1,6 +1,6 @@
-const { getIO } = require('../socket');
 const logger = require('../utils/logger');
 const { getChannel } = require('../config/rabbitmq');
+const MessageProducer = require('./messageProducer');
 
 const Message = require('../models/message');
 const Conversation = require('../models/conversation');
@@ -32,6 +32,17 @@ class MessageConsumer {
             // Parse message
             messageData = JSON.parse(msg.content.toString());
 
+            // Check retry count
+            const maxRetries = 3;
+            const retryCount = msg.properties.headers['x-retry-count'] || 0;
+
+            if (retryCount >= maxRetries) {
+                // Send to DLQ
+                await MessageProducer.sendToDLQ(messageData);
+                channel.ack(msg);
+                return;
+            }
+
             // Create message in database
             const message = new Message({
                 content: messageData.content,
@@ -56,6 +67,10 @@ class MessageConsumer {
             logger.info(`Message processed successfully: ${messageData.id}`);
         } catch (error) {
             logger.error('Error processing message:', error);
+
+            // Send to retry queue
+            if (messageData) await MessageProducer.sendToRetry(messageData);
+            channel.ack(msg);
         }
     }
 }
