@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const logger = require('../utils/logger');
 const { body, validationResult } = require('express-validator');
 
 const User = require('../models/user');
@@ -7,6 +8,7 @@ const Message = require('../models/message');
 const Conversation = require('../models/conversation');
 
 const { authenticateToken } = require('../middleware/auth');
+const { errorHandler } = require('../middleware/errorHandler');
 
 // Validation middleware
 const validateConversation = [body('participantId').isMongoId().withMessage('Invalid participant ID')];
@@ -65,12 +67,8 @@ router.get('/', authenticateToken, async (req, res) => {
             },
         });
     } catch (error) {
-        console.error('Get conversations error:', error);
-        return res.status(500).json({
-            success: false,
-            error: 'Server error',
-            message: 'Failed to retrieve conversations',
-        });
+        logger.error('Get conversations error:', error);
+        return errorHandler(error, req, res);
     }
 });
 
@@ -137,12 +135,8 @@ router.post('/', authenticateToken, validateConversation, async (req, res) => {
             },
         });
     } catch (error) {
-        console.error('Create conversation error:', error);
-        return res.status(500).json({
-            success: false,
-            error: 'Server error',
-            message: 'Failed to create conversation',
-        });
+        logger.error('Create conversation error:', error);
+        return errorHandler(error, req, res);
     }
 });
 

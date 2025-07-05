@@ -17,6 +17,7 @@ const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
 const messagesRoutes = require('./routes/messages');
 const conversationsRoutes = require('./routes/conversations');
+const { notFoundHandler } = require('./middleware/errorHandler');
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' })); // 10mb limit for json
@@ -27,6 +28,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/messages', messagesRoutes);
 app.use('/api/conversations', conversationsRoutes);
+
+app.use(notFoundHandler);
 
 const server = app.listen(PORT, async () => {
     try {

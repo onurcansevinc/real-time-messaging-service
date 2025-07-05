@@ -1,10 +1,12 @@
 const express = require('express');
 const router = express.Router();
+const logger = require('../utils/logger');
 const { body, validationResult } = require('express-validator');
 
 const Message = require('../models/message');
 const Conversation = require('../models/conversation');
 const { authenticateToken } = require('../middleware/auth');
+const { errorHandler } = require('../middleware/errorHandler');
 
 // Validation middleware
 const validateMessage = [
@@ -86,44 +88,8 @@ router.post('/send', authenticateToken, validateMessage, async (req, res) => {
             },
         });
     } catch (error) {
-        console.error('Send message error:', error);
-
-        // Handle different types of errors
-        if (error.name === 'ValidationError') {
-            const validationErrors = {};
-            Object.keys(error.errors).forEach((field) => {
-                validationErrors[field] = error.errors[field].message;
-            });
-
-            return res.status(400).json({
-                success: false,
-                error: 'Validation failed',
-                message: 'Please check your input data',
-                details: validationErrors,
-            });
-        }
-
-        if (error.name === 'CastError') {
-            return res.status(400).json({
-                success: false,
-                error: 'Invalid ID format',
-                message: 'The provided conversation ID is not valid',
-            });
-        }
-
-        if (error.code === 11000) {
-            return res.status(400).json({
-                success: false,
-                error: 'Duplicate message',
-                message: 'This message already exists',
-            });
-        }
-
-        return res.status(500).json({
-            success: false,
-            error: 'Server error',
-            message: 'An unexpected error occurred while sending the message',
-        });
+        logger.error('Send message error:', error);
+        return errorHandler(error, req, res);
     }
 });
 
@@ -141,8 +107,8 @@ router.get('/:conversationId', authenticateToken, async (req, res) => {
         const messages = await Message.find({ conversation: conversationId }).populate('sender', 'username avatar');
         return res.json({ success: true, data: messages });
     } catch (error) {
-        console.error('Get messages error:', error);
-        return res.status(500).json({ success: false, error: 'Server error' });
+        logger.error('Get messages error:', error);
+        return errorHandler(error, req, res);
     }
 });
 
@@ -163,8 +129,8 @@ router.put('/:messageId/read', authenticateToken, async (req, res) => {
 
         return res.json({ success: true, message: 'Message marked as read' });
     } catch (error) {
-        console.error('Mark message as read error:', error);
-        return res.status(500).json({ success: false, error: 'Server error' });
+        logger.error('Mark message as read error:', error);
+        return errorHandler(error, req, res);
     }
 });
 

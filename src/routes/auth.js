@@ -1,12 +1,15 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const logger = require('../utils/logger');
 const { body, validationResult } = require('express-validator');
 
 const router = express.Router();
+
 const User = require('../models/user');
 const TokenService = require('../services/tokenService');
 const { authenticateToken } = require('../middleware/auth');
+const { errorHandler } = require('../middleware/errorHandler');
 
 // Validation middleware
 const validateRegistration = [
@@ -49,30 +52,8 @@ router.post('/register', validateRegistration, async (req, res) => {
             },
         });
     } catch (error) {
-        console.error('Registration error:', error);
-
-        if (error.name === 'ValidationError') {
-            const validationErrors = {};
-
-            // Extract field-specific errors
-            Object.keys(error.errors).forEach((field) => {
-                validationErrors[field] = error.errors[field].message;
-            });
-
-            return res.status(400).json({
-                success: false,
-                error: 'Validation failed',
-                message: 'Please check your input data',
-                details: validationErrors,
-            });
-        }
-
-        // Handle other errors
-        return res.status(500).json({
-            success: false,
-            error: 'Server error',
-            message: 'An unexpected error occurred. Please try again later.',
-        });
+        logger.error('Registration error:', error);
+        return errorHandler(error, req, res);
     }
 });
 
@@ -99,8 +80,8 @@ router.post('/login', validateLogin, async (req, res) => {
         const accessToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
         return res.json({ success: true, message: 'Login successful', accessToken });
     } catch (error) {
-        console.error('Login error:', error);
-        return res.status(500).json({ success: false, error: 'Server error' });
+        logger.error('Login error:', error);
+        return errorHandler(error, req, res);
     }
 });
 
@@ -115,8 +96,8 @@ router.post('/refresh', authenticateToken, async (req, res) => {
         const accessToken = jwt.sign({ userId: req.user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
         return res.json({ success: true, message: 'Token refreshed successfully', accessToken });
     } catch (error) {
-        console.error('Token refresh error:', error);
-        return res.status(401).json({ success: false, error: 'Invalid refresh token' });
+        logger.error('Token refresh error:', error);
+        return errorHandler(error, req, res);
     }
 });
 
@@ -129,8 +110,8 @@ router.post('/logout', authenticateToken, async (req, res) => {
 
         return res.json({ success: true, message: 'Logout successful' });
     } catch (error) {
-        console.error('Logout error:', error);
-        return res.status(500).json({ success: false, error: 'Server error' });
+        logger.error('Logout error:', error);
+        return errorHandler(error, req, res);
     }
 });
 
@@ -150,8 +131,8 @@ router.get('/me', authenticateToken, async (req, res) => {
             },
         });
     } catch (error) {
-        console.error('Get profile error:', error);
-        return res.status(500).json({ success: false, error: 'Server error' });
+        logger.error('Get profile error:', error);
+        return errorHandler(error, req, res);
     }
 });
 

@@ -1,8 +1,11 @@
 const express = require('express');
 const router = express.Router();
+const logger = require('../utils/logger');
+
+const User = require('../models/user');
 
 const { authenticateToken } = require('../middleware/auth');
-const User = require('../models/user');
+const { errorHandler } = require('../middleware/errorHandler');
 
 // Get the users
 router.get('/list', authenticateToken, async (req, res) => {
@@ -16,8 +19,8 @@ router.get('/list', authenticateToken, async (req, res) => {
             count: users.length,
         });
     } catch (error) {
-        console.error('Get users error:', error);
-        return res.status(500).json({ success: false, error: 'Server error' });
+        logger.error('Get users error:', error);
+        return errorHandler(error, req, res);
     }
 });
 
