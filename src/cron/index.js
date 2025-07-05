@@ -1,11 +1,15 @@
 const logger = require('../utils/logger');
-const { startMessagePlanningJob, planMessages } = require('./messagePlanning');
+const { startMessagePlanningJob } = require('./messagePlanning');
+const { startQueueManagementJob } = require('./queueManagement');
 
 // Start all cron jobs
 const startCronJobs = () => {
     try {
-        // Message planning job (02:00)
+        // Message planning job (02:00 daily)
         startMessagePlanningJob();
+
+        // Queue management job (every minute)
+        startQueueManagementJob();
 
         logger.info('All cron jobs started successfully');
     } catch (error) {
@@ -14,13 +18,23 @@ const startCronJobs = () => {
     }
 };
 
-// Stop all cron jobs
+// Stop cron jobs
 const stopCronJobs = () => {
-    // Cron jobs are automatically stopped
+    // Cron jobs automatically stop when process ends
     logger.info('Cron jobs stopped');
+};
+
+// Get cron job status
+const getCronJobStatus = () => {
+    return {
+        messagePlanning: 'Scheduled for 02:00 daily',
+        queueManagement: 'Scheduled for every minute',
+        status: 'Running',
+    };
 };
 
 module.exports = {
     startCronJobs,
     stopCronJobs,
+    getCronJobStatus,
 };

@@ -87,6 +87,24 @@ autoMessageSchema.index({ sendDate: 1, isQueued: 1 }); // For cron job
 autoMessageSchema.index({ isSent: 1, isQueued: 1 }); // For queue management
 autoMessageSchema.index({ senderId: 1, receiverId: 1 }); // For user queries
 
+autoMessageSchema.methods.markAsQueued = async function () {
+    this.isQueued = true;
+    this.queuedAt = new Date();
+    await this.save();
+};
+
+autoMessageSchema.methods.markAsSent = async function () {
+    this.isSent = true;
+    this.sentAt = new Date();
+    await this.save();
+};
+
+autoMessageSchema.methods.markAsFailed = async function (errorMessage) {
+    this.isSent = false;
+    this.errorMessage = errorMessage;
+    await this.save();
+};
+
 const AutoMessage = mongoose.model('AutoMessage', autoMessageSchema);
 
 module.exports = AutoMessage;

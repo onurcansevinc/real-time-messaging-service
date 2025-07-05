@@ -1,8 +1,10 @@
+const { getIO } = require('../socket');
 const logger = require('../utils/logger');
 const { getChannel } = require('../config/rabbitmq');
 const MessageProducer = require('./messageProducer');
 
 const Message = require('../models/message');
+const AutoMessage = require('../models/autoMessage');
 const Conversation = require('../models/conversation');
 
 class MessageConsumer {
@@ -59,10 +61,32 @@ class MessageConsumer {
                 lastMessageAt: new Date(),
             });
 
-            // TODO: Send real-time notification via Socket.IO
+            // Send real-time notification via Socket.IO
+            const conversation = await Conversation.findById(messageData.conversationId);
+            if (conversation) {
+                const io = getIO();
+                io.to(`conversation:${messageData.conversationId}`).emit('message_received', {
+                    id: message._id,
+                    content: message.content,
+                    sender: {
+                        id: messageData.senderId,
+                        username: 'System', // Otomatik mesaj olduğu için System
+                        avatar: null,
+                    },
+                    conversationId: messageData.conversationId,
+                    createdAt: new Date(),
+                    messageType: 'auto',
+                });
+            }
 
             // Acknowledge message
             channel.ack(msg);
+
+            const autoMessage = await AutoMessage.findById(messageData.id);
+            if (autoMessage) {
+                autoMessage.isSent = true;
+                await autoMessage.save();
+            }
 
             logger.info(`Message processed successfully: ${messageData.id}`);
         } catch (error) {
