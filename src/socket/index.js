@@ -4,6 +4,7 @@ const socketIO = require('socket.io');
 const User = require('../models/user');
 const logger = require('../utils/logger');
 
+const typingHandler = require('./events/typing');
 const messageHandler = require('./events/message');
 const connectionHandler = require('./events/connection');
 const TokenService = require('../services/tokenService');
@@ -54,6 +55,7 @@ const initializeSocket = (server) => {
     io.on('connection', async (socket) => {
         console.log(`User connected: ${socket.user.username} (${socket.user._id})`);
 
+        typingHandler(socket, io);
         messageHandler(socket, io);
         connectionHandler(socket, io);
         conversationHandler(socket, io);
