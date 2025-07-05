@@ -9,6 +9,7 @@ const connectDB = require('./config/database');
 const { connectRedis } = require('./config/redis');
 const { connectRabbitMQ } = require('./config/rabbitmq');
 
+const { startCronJobs } = require('./cron');
 const { initializeSocket } = require('./socket');
 const MessageConsumer = require('./services/messageConsumer');
 
@@ -34,8 +35,12 @@ const server = app.listen(PORT, async () => {
         await connectRedis();
         await connectRabbitMQ();
 
+        // Start cron jobs
+        startCronJobs();
+
         // Start message consumer
         await MessageConsumer.startConsuming();
+
         initializeSocket(server);
 
         logger.info(`Server running on port ${PORT}`);
