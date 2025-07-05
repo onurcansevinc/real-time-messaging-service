@@ -96,7 +96,7 @@ router.post('/login', validateLogin, async (req, res) => {
         if (token) await TokenService.blacklistToken(token);
 
         // Generate JWT tokens
-        const accessToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const accessToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
         return res.json({ success: true, message: 'Login successful', accessToken });
     } catch (error) {
         console.error('Login error:', error);

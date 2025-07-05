@@ -3,17 +3,22 @@ const socketIO = require('socket.io');
 const { getRedisClient } = require('../config/redis');
 
 const User = require('../models/user');
+const logger = require('../utils/logger');
 const TokenService = require('../services/tokenService');
+const connectionHandler = require('./events/connection');
 
 let io;
 
 const initializeSocket = (server) => {
+    logger.info('Initializing socket.io');
     io = socketIO(server, {
         cors: {
             origin: process.env.CLIENT_URL,
             methods: ['GET', 'POST'],
         },
     });
+
+    logger.info('Socket.io initialized');
 
     // Authentication middleware
     io.use(async (socket, next) => {
@@ -46,6 +51,8 @@ const initializeSocket = (server) => {
     // Connection handler
     io.on('connection', async (socket) => {
         console.log(`User connected: ${socket.user.username} (${socket.user._id})`);
+
+        connectionHandler(socket, io);
     });
 
     return io;
@@ -57,31 +64,7 @@ const getIO = () => {
     return io;
 };
 
-// Send message to conversation
-const sendMessageToConversation = (conversationId, messageData) => {
-    if (io) io.to(`conversation:${conversationId}`).emit('message_received', messageData);
-};
-
-// Send notification to user
-const sendNotificationToUser = (userId, notificationData) => {
-    if (io) io.to(`user:${userId}`).emit('notification', notificationData);
-};
-
-// Get online users count
-const getOnlineUsersCount = async () => {
-    try {
-        const redisClient = getRedisClient();
-        return await redisClient.sCard('online_users');
-    } catch (error) {
-        console.error('Error getting online users count:', error);
-        return 0;
-    }
-};
-
 module.exports = {
     initializeSocket,
     getIO,
-    sendMessageToConversation,
-    sendNotificationToUser,
-    getOnlineUsersCount,
 };
