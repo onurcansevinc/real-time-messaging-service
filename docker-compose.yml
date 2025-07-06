@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+    # Node.js Application
+    app:
+        build: .
+        container_name: messaging-app
+        ports:
+            - '3000:3000'
+        env_file:
+            - .env
+        depends_on:
+            - mongo
+            - redis
+            - rabbitmq
+            - elasticsearch
+        volumes:
+            - ./logs:/app/logs
+        networks:
+            - messaging-network
+        restart: unless-stopped
+
+    # MongoDB
+    mongo:
+        image: mongo:latest
+        container_name: messaging-mongo
+        ports:
+            - '27017:27017'
+        environment:
+            - MONGO_INITDB_DATABASE=messaging_app
+        volumes:
+            - mongo_data:/data/db
+            - ./mongo-init:/docker-entrypoint-initdb.d
+        networks:
+            - messaging-network
+        restart: unless-stopped
+
+    # Redis
+    redis:
+        image: redis:latest
+        container_name: messaging-redis
+        ports:
+            - '6379:6379'
+        volumes:
+            - redis_data:/data
+        networks:
+            - messaging-network
+        restart: unless-stopped
+        command: redis-server --appendonly yes
+
+    # RabbitMQ
+    rabbitmq:
+        image: rabbitmq:4-management-alpine
+        container_name: messaging-rabbitmq
+        ports:
+            - '5672:5672'
+            - '15672:15672'
+        environment:
+            - RABBITMQ_DEFAULT_USER=admin
+            - RABBITMQ_DEFAULT_PASS=admin123
+        volumes:
+            - rabbitmq_data:/var/lib/rabbitmq
+        networks:
+            - messaging-network
+        restart: unless-stopped
+
+    # Elasticsearch
+    elasticsearch:
+        image: docker.elastic.co/elasticsearch/elasticsearch:8.18.2
+        container_name: messaging-elasticsearch
+        ports:
+            - '9200:9200'
+            - '9300:9300'
+        environment:
+            - discovery.type=single-node
+            - xpack.security.enabled=false
+            - 'ES_JAVA_OPTS=-Xms512m -Xmx512m'
+        volumes:
+            - elasticsearch_data:/usr/share/elasticsearch/data
+        networks:
+            - messaging-network
+        restart: unless-stopped
+
+volumes:
+    mongo_data:
+        driver: local
+    redis_data:
+        driver: local
+    rabbitmq_data:
+        driver: local
+    elasticsearch_data:
+        driver: local
+
+networks:
+    messaging-network:
+        driver: bridge
