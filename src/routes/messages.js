@@ -5,9 +5,11 @@ const { body, validationResult } = require('express-validator');
 
 const Message = require('../models/message');
 const Conversation = require('../models/conversation');
-const { authenticateToken } = require('../middleware/auth');
-const { errorHandler } = require('../middleware/errorHandler');
+
 const { cacheMiddleware } = require('../middleware/cache');
+const { authenticateToken } = require('../middleware/auth');
+const { elasticClient } = require('../config/elasticsearch');
+const { errorHandler } = require('../middleware/errorHandler');
 
 /**
  * @swagger
@@ -25,6 +27,25 @@ const validateMessage = [
         .withMessage('Message cannot exceed 1000 characters'),
     body('conversationId').isMongoId().withMessage('Invalid conversation ID'),
 ];
+
+router.get('/search', async (req, res) => {
+    try {
+        const { q } = req.query;
+        if (!q) return res.status(400).json({ success: false, error: 'Query parameter "q" is required' });
+
+        const result = await elasticClient.search({
+            index: 'messages',
+            query: {
+                match: { content: q },
+            },
+        });
+
+        return res.json(result.hits.hits.map((hit) => hit._source) || []);
+    } catch (error) {
+        logger.error('Search messages error:', error);
+        return errorHandler(error, req, res);
+    }
+});
 
 /**
  * @swagger

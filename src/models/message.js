@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { elasticClient } = require('../config/elasticsearch');
 
 const messageSchema = new mongoose.Schema(
     {
@@ -61,6 +62,19 @@ messageSchema.methods.markAsRead = async function (userId) {
     this.readBy.push({ user: userId, readAt: new Date() });
     await this.save();
 };
+
+messageSchema.post('save', async function (doc) {
+    await elasticClient.index({
+        index: 'messages',
+        document: {
+            messageId: doc._id,
+            sender: doc.sender,
+            receiver: doc.receiver,
+            content: doc.content,
+            createdAt: doc.createdAt,
+        },
+    });
+});
 
 const Message = mongoose.model('Message', messageSchema);
 

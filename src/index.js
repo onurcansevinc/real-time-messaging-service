@@ -13,6 +13,7 @@ const cacheService = require('./config/cache');
 const swaggerSpecs = require('./config/swagger');
 const { connectRedis } = require('./config/redis');
 const { connectRabbitMQ } = require('./config/rabbitmq');
+const { connectElasticsearch } = require('./config/elasticsearch');
 
 const { startCronJobs } = require('./cron');
 const { initializeSocket } = require('./socket');
@@ -112,6 +113,7 @@ const server = app.listen(PORT, async () => {
         await connectDB();
         await connectRedis();
         await connectRabbitMQ();
+        await connectElasticsearch();
 
         // Initialize cache service
         cacheService.init();
