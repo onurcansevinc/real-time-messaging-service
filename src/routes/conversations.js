@@ -7,6 +7,7 @@ const User = require('../models/user');
 const Message = require('../models/message');
 const Conversation = require('../models/conversation');
 
+const { cacheMiddleware } = require('../middleware/cache');
 const { authenticateToken } = require('../middleware/auth');
 const { errorHandler } = require('../middleware/errorHandler');
 
@@ -45,7 +46,7 @@ const validateConversation = [body('participantId').isMongoId().withMessage('Inv
  *       401:
  *         description: Unauthorized
  */
-router.get('/', authenticateToken, async (req, res) => {
+router.get('/', authenticateToken, cacheMiddleware('conversation-list'), async (req, res) => {
     try {
         const { page = 1, limit = 20 } = req.query;
         const userId = req.user._id;

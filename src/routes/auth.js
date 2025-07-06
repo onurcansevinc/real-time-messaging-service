@@ -8,6 +8,7 @@ const router = express.Router();
 
 const User = require('../models/user');
 const TokenService = require('../services/tokenService');
+const { cacheMiddleware } = require('../middleware/cache');
 const { authenticateToken } = require('../middleware/auth');
 const { errorHandler } = require('../middleware/errorHandler');
 
@@ -218,7 +219,7 @@ router.post('/logout', authenticateToken, async (req, res) => {
  *       401:
  *         description: Unauthorized
  */
-router.get('/me', authenticateToken, async (req, res) => {
+router.get('/me', authenticateToken, cacheMiddleware('user-profile'), async (req, res) => {
     try {
         const user = req.user;
         if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });

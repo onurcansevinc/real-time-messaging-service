@@ -7,6 +7,7 @@ const Message = require('../models/message');
 const Conversation = require('../models/conversation');
 const { authenticateToken } = require('../middleware/auth');
 const { errorHandler } = require('../middleware/errorHandler');
+const { cacheMiddleware } = require('../middleware/cache');
 
 /**
  * @swagger
@@ -152,7 +153,7 @@ router.post('/send', authenticateToken, validateMessage, async (req, res) => {
  *       404:
  *         description: Conversation not found
  */
-router.get('/:conversationId', authenticateToken, async (req, res) => {
+router.get('/:conversationId', authenticateToken, cacheMiddleware('message-list'), async (req, res) => {
     try {
         const conversationId = req.params.conversationId;
 

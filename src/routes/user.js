@@ -4,6 +4,7 @@ const logger = require('../utils/logger');
 
 const User = require('../models/user');
 
+const { cacheMiddleware } = require('../middleware/cache');
 const { authenticateToken } = require('../middleware/auth');
 const { errorHandler } = require('../middleware/errorHandler');
 
@@ -15,7 +16,7 @@ const { errorHandler } = require('../middleware/errorHandler');
  */
 
 // Get the users
-router.get('/list', authenticateToken, async (req, res) => {
+router.get('/list', authenticateToken, cacheMiddleware('user-list'), async (req, res) => {
     try {
         const users = await User.find({}).select('-__v');
 

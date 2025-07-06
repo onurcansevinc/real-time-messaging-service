@@ -1,9 +1,7 @@
 const redis = require('redis');
 let redisClient = null;
 
-/**
- * Connect to Redis
- */
+// Connect to Redis
 const connectRedis = async () => {
     try {
         // Create Redis client
@@ -54,19 +52,13 @@ const connectRedis = async () => {
     }
 };
 
-/**
- * Get Redis client instance
- */
+// Get Redis client instance
 const getRedisClient = () => {
-    if (!redisClient) {
-        throw new Error('Redis client not initialized. Call connectRedis() first.');
-    }
+    if (!redisClient) throw new Error('Redis client not initialized. Call connectRedis() first.');
     return redisClient;
 };
 
-/**
- * Close Redis connection
- */
+// Close Redis connection
 const disconnectRedis = async () => {
     if (redisClient) {
         await redisClient.quit();

@@ -9,6 +9,7 @@ require('dotenv').config();
 const PORT = process.env.PORT || 3000;
 
 const connectDB = require('./config/database');
+const cacheService = require('./config/cache');
 const swaggerSpecs = require('./config/swagger');
 const { connectRedis } = require('./config/redis');
 const { connectRabbitMQ } = require('./config/rabbitmq');
@@ -86,6 +87,23 @@ app.get('/api/health', generalLimiter, (req, res) => {
     });
 });
 
+// Cache test endpoint
+app.get('/api/cache-test', generalLimiter, async (req, res) => {
+    const timestamp = new Date().toISOString();
+
+    res.json({
+        success: true,
+        message: 'Cache test response',
+        timestamp: timestamp,
+        cacheInfo: 'This response should be cached for 5 minutes',
+        instructions: [
+            'First request: Response from server',
+            'Second request (within 5 min): Response from cache',
+            'Check response time difference',
+        ],
+    });
+});
+
 app.use(notFoundHandler);
 
 const server = app.listen(PORT, async () => {
@@ -94,6 +112,9 @@ const server = app.listen(PORT, async () => {
         await connectDB();
         await connectRedis();
         await connectRabbitMQ();
+
+        // Initialize cache service
+        cacheService.init();
 
         // Start cron jobs
         startCronJobs();
