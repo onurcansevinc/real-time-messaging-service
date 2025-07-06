@@ -11,6 +11,13 @@ const TokenService = require('../services/tokenService');
 const { authenticateToken } = require('../middleware/auth');
 const { errorHandler } = require('../middleware/errorHandler');
 
+/**
+ * @swagger
+ * tags:
+ *   - name: Authentication
+ *     description: User authentication and session management
+ */
+
 // Validation middleware
 const validateRegistration = [
     body('username').isLength({ min: 3 }).withMessage('Username must be at least 3 characters'),
@@ -23,7 +30,37 @@ const validateLogin = [
     body('password').notEmpty().withMessage('Password is required'),
 ];
 
-// Register a new user
+/**
+ * @swagger
+ * /api/auth/register:
+ *   post:
+ *     summary: Register a new user
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [username, email, password]
+ *             properties:
+ *               username:
+ *                 type: string
+ *                 minLength: 3
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *                 minLength: 6
+ *     responses:
+ *       201:
+ *         description: User registered successfully
+ *       400:
+ *         description: Validation error or user already exists
+ *       500:
+ *         description: Server error
+ */
 router.post('/register', validateRegistration, async (req, res) => {
     try {
         // Check for validation errors
@@ -57,7 +94,33 @@ router.post('/register', validateRegistration, async (req, res) => {
     }
 });
 
-// Login a user
+/**
+ * @swagger
+ * /api/auth/login:
+ *   post:
+ *     summary: Login user
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, password]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *       400:
+ *         description: Invalid credentials
+ *       500:
+ *         description: Server error
+ */
 router.post('/login', validateLogin, async (req, res) => {
     try {
         const errors = validationResult(req);
@@ -85,7 +148,20 @@ router.post('/login', validateLogin, async (req, res) => {
     }
 });
 
-// Refresh the access token
+/**
+ * @swagger
+ * /api/auth/refresh:
+ *   post:
+ *     summary: Refresh access token
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Token refreshed successfully
+ *       401:
+ *         description: Invalid refresh token
+ */
 router.post('/refresh', authenticateToken, async (req, res) => {
     try {
         // Add old token to blacklist
@@ -101,7 +177,20 @@ router.post('/refresh', authenticateToken, async (req, res) => {
     }
 });
 
-// Logout a user and remove the token
+/**
+ * @swagger
+ * /api/auth/logout:
+ *   post:
+ *     summary: Logout user
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Logout successful
+ *       500:
+ *         description: Server error
+ */
 router.post('/logout', authenticateToken, async (req, res) => {
     try {
         // Add old token to blacklist
@@ -115,7 +204,20 @@ router.post('/logout', authenticateToken, async (req, res) => {
     }
 });
 
-// Get the user details
+/**
+ * @swagger
+ * /api/auth/me:
+ *   get:
+ *     summary: Get current user profile
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile retrieved
+ *       401:
+ *         description: Unauthorized
+ */
 router.get('/me', authenticateToken, async (req, res) => {
     try {
         const user = req.user;

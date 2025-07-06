@@ -10,10 +10,41 @@ const Conversation = require('../models/conversation');
 const { authenticateToken } = require('../middleware/auth');
 const { errorHandler } = require('../middleware/errorHandler');
 
+/**
+ * @swagger
+ * tags:
+ *   - name: Conversations
+ *     description: Conversation management
+ */
+
 // Validation middleware
 const validateConversation = [body('participantId').isMongoId().withMessage('Invalid participant ID')];
 
-// Get all conversations
+/**
+ * @swagger
+ * /api/conversations:
+ *   get:
+ *     summary: List all conversations for the user
+ *     tags: [Conversations]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: Page size
+ *     responses:
+ *       200:
+ *         description: List of conversations
+ *       401:
+ *         description: Unauthorized
+ */
 router.get('/', authenticateToken, async (req, res) => {
     try {
         const { page = 1, limit = 20 } = req.query;
@@ -72,7 +103,33 @@ router.get('/', authenticateToken, async (req, res) => {
     }
 });
 
-// Create new conversation or get existing direct conversation
+/**
+ * @swagger
+ * /api/conversations:
+ *   post:
+ *     summary: Create or get a direct conversation
+ *     tags: [Conversations]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [participantId]
+ *             properties:
+ *               participantId:
+ *                 type: string
+ *                 description: The user ID to start a conversation with
+ *     responses:
+ *       200:
+ *         description: Conversation retrieved/created successfully
+ *       400:
+ *         description: Validation error
+ *       404:
+ *         description: Participant not found
+ */
 router.post('/', authenticateToken, validateConversation, async (req, res) => {
     try {
         // Check if req.body exists

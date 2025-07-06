@@ -1,11 +1,14 @@
+const swaggerUi = require('swagger-ui-express');
 const logger = require('./utils/logger');
 const express = require('express');
+const cors = require('cors');
 const app = express();
-require('dotenv').config();
 
+require('dotenv').config();
 const PORT = process.env.PORT || 3000;
 
 const connectDB = require('./config/database');
+const swaggerSpecs = require('./config/swagger');
 const { connectRedis } = require('./config/redis');
 const { connectRabbitMQ } = require('./config/rabbitmq');
 
@@ -25,6 +28,39 @@ const { generalLimiter, authLimiter, messageLimiter } = require('./middleware/ra
 app.use(express.json({ limit: '10mb' })); // 10mb limit for json
 app.use(express.urlencoded({ extended: true })); // extended: true for urlencoded
 
+// cors
+app.use(
+    cors({
+        origin: process.env.CLIENT_URL,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization'],
+        credentials: true,
+    })
+);
+
+// Swagger documentation
+app.use(
+    '/api-docs',
+    swaggerUi.serve,
+    swaggerUi.setup(swaggerSpecs, {
+        customCss: '.swagger-ui .topbar { display: none }',
+        customSiteTitle: 'Real-Time Messaging API Documentation',
+        customfavIcon: '/favicon.ico',
+        swaggerOptions: {
+            persistAuthorization: true,
+            displayRequestDuration: true,
+            filter: true,
+            deepLinking: true,
+        },
+    })
+);
+
+// Routes
+app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/user', generalLimiter, userRoutes);
+app.use('/api/messages', messageLimiter, messagesRoutes);
+app.use('/api/conversations', generalLimiter, conversationsRoutes);
+
 // health check
 app.get('/api/health', generalLimiter, (req, res) => {
     res.status(200).json({
@@ -33,12 +69,6 @@ app.get('/api/health', generalLimiter, (req, res) => {
         timestamp: new Date().toISOString(),
     });
 });
-
-// Routes
-app.use('/api/auth', authLimiter, authRoutes);
-app.use('/api/user', generalLimiter, userRoutes);
-app.use('/api/messages', messageLimiter, messagesRoutes);
-app.use('/api/conversations', generalLimiter, conversationsRoutes);
 
 app.use(notFoundHandler);
 

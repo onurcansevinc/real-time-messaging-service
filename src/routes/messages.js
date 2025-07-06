@@ -8,6 +8,13 @@ const Conversation = require('../models/conversation');
 const { authenticateToken } = require('../middleware/auth');
 const { errorHandler } = require('../middleware/errorHandler');
 
+/**
+ * @swagger
+ * tags:
+ *   - name: Messages
+ *     description: Messaging endpoints
+ */
+
 // Validation middleware
 const validateMessage = [
     body('content')
@@ -18,6 +25,35 @@ const validateMessage = [
     body('conversationId').isMongoId().withMessage('Invalid conversation ID'),
 ];
 
+/**
+ * @swagger
+ * /api/messages/send:
+ *   post:
+ *     summary: Send a new message
+ *     tags: [Messages]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [content, conversationId]
+ *             properties:
+ *               content:
+ *                 type: string
+ *                 maxLength: 1000
+ *               conversationId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Message sent successfully
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ */
 // Send a new message
 router.post('/send', authenticateToken, validateMessage, async (req, res) => {
     try {
@@ -93,6 +129,29 @@ router.post('/send', authenticateToken, validateMessage, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/messages/{conversationId}:
+ *   get:
+ *     summary: Get messages for a conversation
+ *     tags: [Messages]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: conversationId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Conversation ID
+ *     responses:
+ *       200:
+ *         description: Messages retrieved successfully
+ *       403:
+ *         description: Not a participant of this conversation
+ *       404:
+ *         description: Conversation not found
+ */
 router.get('/:conversationId', authenticateToken, async (req, res) => {
     try {
         const conversationId = req.params.conversationId;
@@ -112,6 +171,29 @@ router.get('/:conversationId', authenticateToken, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/messages/{messageId}/read:
+ *   put:
+ *     summary: Mark a message as read
+ *     tags: [Messages]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: messageId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Message ID
+ *     responses:
+ *       200:
+ *         description: Message marked as read
+ *       404:
+ *         description: Message not found
+ *       403:
+ *         description: Not authorized
+ */
 router.put('/:messageId/read', authenticateToken, async (req, res) => {
     try {
         const messageId = req.params.messageId;
