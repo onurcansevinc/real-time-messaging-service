@@ -1,6 +1,7 @@
 const swaggerUi = require('swagger-ui-express');
 const logger = require('./utils/logger');
 const express = require('express');
+const helmet = require('helmet');
 const cors = require('cors');
 const app = express();
 
@@ -27,6 +28,21 @@ const { generalLimiter, authLimiter, messageLimiter } = require('./middleware/ra
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' })); // 10mb limit for json
 app.use(express.urlencoded({ extended: true })); // extended: true for urlencoded
+
+// helmet
+app.use(
+    helmet({
+        crossOriginEmbedderPolicy: false, // needed for Socket.IO
+        contentSecurityPolicy: {
+            directives: {
+                defaultSrc: ["'self'"], // allow self
+                styleSrc: ["'self'", "'unsafe-inline'"], // allow unsafe-inline
+                scriptSrc: ["'self'", "'unsafe-inline'"], // allow unsafe-inline
+                imgSrc: ["'self'", 'data:', 'https:'], // allow data and https
+            },
+        },
+    })
+);
 
 // cors
 app.use(
