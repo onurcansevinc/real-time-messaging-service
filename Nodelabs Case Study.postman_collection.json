@@ -1,0 +1,424 @@
+{
+	"info": {
+		"_postman_id": "1e65b82f-1a68-4394-b316-9aea49cdab8f",
+		"name": "Nodelabs Case Study",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "13754195"
+	},
+	"item": [
+		{
+			"name": "auth",
+			"item": [
+				{
+					"name": "Register",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"Onur_Can_Sevinc\",\n    \"password\": \"123123\",\n    \"email\": \"me@onurcansevinC.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/{{auth_endpoint}}/register",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"{{auth_endpoint}}",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"password\": \"123123\",\n    \"email\": \"me@onurcansevinc.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/{{auth_endpoint}}/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"{{auth_endpoint}}",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"password\": \"123123\",\n    \"email\": \"me@onurcansevinc.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/{{auth_endpoint}}/logout",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"{{auth_endpoint}}",
+								"logout"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"password\": \"123123\",\n    \"email\": \"me@onurcansevinc.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/{{auth_endpoint}}/refresh",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"{{auth_endpoint}}",
+								"refresh"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Me",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/{{auth_endpoint}}/me",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"{{auth_endpoint}}",
+								"me"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "user",
+			"item": [
+				{
+					"name": "Get users",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{base_url}}/{{user_endpoint}}/list",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"{{user_endpoint}}",
+								"list"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "conversations",
+			"item": [
+				{
+					"name": "Get conversations",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{base_url}}/{{conversations_endpoint}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"{{conversations_endpoint}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create conversations",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"participantId\": \"68681227679383913f76a55d\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/{{conversations_endpoint}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"{{conversations_endpoint}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "messages",
+			"item": [
+				{
+					"name": "Send message",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"content\": \"Test message\",\n    \"conversationId\": \"68681252679383913f76a566\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/{{messages_endpoint}}/send",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"{{messages_endpoint}}",
+								"send"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get messages",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"content\": \"Test message\",\n    \"conversationId\": \"68680ac0543c7dc8eb5ada25\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/{{messages_endpoint}}/68681252679383913f76a566",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"{{messages_endpoint}}",
+								"68681252679383913f76a566"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search messages",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"q\": \"Test message\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/{{messages_endpoint}}/search?q=test",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"{{messages_endpoint}}",
+								"search"
+							],
+							"query": [
+								{
+									"key": "q",
+									"value": "test"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Healt",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\": \"Onur_Can_Sevinc\",\n    \"password\": \"123123\",\n    \"email\": \"me@onurcansevinC.com\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/health",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"health"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3000/api",
+			"type": "string"
+		},
+		{
+			"key": "auth_endpoint",
+			"value": "auth",
+			"type": "string"
+		},
+		{
+			"key": "user_endpoint",
+			"value": "user",
+			"type": "string"
+		},
+		{
+			"key": "messages_endpoint",
+			"value": "messages",
+			"type": "string"
+		},
+		{
+			"key": "conversations_endpoint",
+			"value": "conversations",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2ODY4MTIyNzY3OTM4MzkxM2Y3NmE1NWQiLCJpYXQiOjE3NTE3MTI3NDcsImV4cCI6MTc1MjMxNzU0N30.tUw1ihnT60WKwIxQ6v4bCBHe8_WLQPNFCM0wRrI3-1w",
+			"type": "string"
+		}
+	]
+}
