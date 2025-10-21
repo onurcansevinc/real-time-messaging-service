@@ -120,8 +120,8 @@
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/onurcansevinc/nodelabs-study-case.git
-cd nodelabs-study-case
+git clone https://github.com/onurcansevinc/real-time-messaging-service.git
+cd real-time-messaging-service
 ```
 
 ### 2. Install Dependencies
