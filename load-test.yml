@@ -1,0 +1,339 @@
+config:
+    target: 'http://localhost:3000'
+    phases:
+        # Warm-up phase - 10 concurrent users for 1 minute
+        - duration: 60
+          arrivalRate: 10
+          name: 'Warm-up Phase'
+
+        # Ramp-up phase 1 - Gradually increase from 10 to 100 concurrent users
+        - duration: 120
+          arrivalRate: 10
+          rampTo: 100
+          name: 'Ramp-up Phase 1'
+
+        # Ramp-up phase 2 - Gradually increase from 100 to 500 concurrent users
+        - duration: 120
+          arrivalRate: 100
+          rampTo: 500
+          name: 'Ramp-up Phase 2'
+
+        # Sustained load phase - 500 concurrent users for 3 minutes
+        - duration: 180
+          arrivalRate: 500
+          name: 'Sustained Load Phase'
+
+        # Peak load phase - Ramp from 500 to 1000 concurrent users
+        - duration: 120
+          arrivalRate: 500
+          rampTo: 1000
+          name: 'Peak Load Phase'
+
+        # Extended high load - Maintain 1000 concurrent users for 3 minutes
+        - duration: 180
+          arrivalRate: 1000
+          name: 'Extended High Load Phase'
+
+        # Cool-down phase - Gradually reduce from 1000 to 100
+        - duration: 60
+          arrivalRate: 1000
+          rampTo: 100
+          name: 'Cool-down Phase'
+
+        # Final cool-down - Reduce to 0
+        - duration: 30
+          arrivalRate: 100
+          rampTo: 0
+          name: 'Final Cool-down'
+
+    plugins:
+        expect: {}
+        metrics-by-endpoint:
+            stripQueryString: true
+
+    processor: './load-test-processor.js'
+
+    # Default payload
+    defaults:
+        headers:
+            Content-Type: 'application/json'
+
+    # Capture response variables
+    capture:
+        - regex: '"accessToken":"([^"]+)"'
+          as: 'token'
+        - regex: '"id":"([^"]+)"'
+          as: 'userId'
+        - json: '$.data.conversations[*].id'
+          as: 'conversationIds'
+        - json: '$.data.id'
+          as: 'conversationId'
+        - json: '$.users[*]._id'
+          as: 'userIds'
+
+scenarios:
+    # Main user journey scenario
+    - name: 'Complete User Journey'
+      weight: 70
+      flow:
+          # Step 1: Health check
+          - get:
+                url: '/api/health'
+                capture:
+                    - json: '$.timestamp'
+                      as: 'serverTime'
+
+          # Step 2: Register or Login
+          - function: 'generateUserCredentials'
+
+          - post:
+                url: '/api/auth/register'
+                json:
+                    username: '{{ username }}'
+                    email: '{{ email }}'
+                    password: '{{ password }}'
+                capture:
+                    - json: '$.user.id'
+                      as: 'registeredUserId'
+                think: 1
+
+          # Alternative: Login (if registration fails or user exists)
+          - post:
+                url: '/api/auth/login'
+                json:
+                    email: '{{ email }}'
+                    password: '{{ password }}'
+                capture:
+                    - regex: '"accessToken":"([^"]+)"'
+                      as: 'token'
+                think: 1
+
+          # Step 3: Get user profile
+          - get:
+                url: '/api/auth/me'
+                headers:
+                    Authorization: 'Bearer {{ token }}'
+                expect:
+                    - statusCode: 200
+                    - hasProperty: success
+                think: 2
+
+          # Step 4: Get user list
+          - get:
+                url: '/api/user/list'
+                headers:
+                    Authorization: 'Bearer {{ token }}'
+                capture:
+                    - json: '$.users[0]._id'
+                      as: 'targetUserId'
+                expect:
+                    - statusCode: 200
+                think: 3
+
+          # Step 5: Get conversations
+          - get:
+                url: '/api/conversations'
+                headers:
+                    Authorization: 'Bearer {{ token }}'
+                expect:
+                    - statusCode: 200
+                think: 2
+
+          # Step 6: Create or get conversation
+          - function: 'getRandomUserId'
+          - post:
+                url: '/api/conversations'
+                json:
+                    participantId: '{{ targetUserId }}'
+                headers:
+                    Authorization: 'Bearer {{ token }}'
+                capture:
+                    - json: '$.data.id'
+                      as: 'conversationId'
+                expect:
+                    - statusCode: 200
+                think: 1
+
+          # Step 7: Send message
+          - post:
+                url: '/api/messages/send'
+                json:
+                    content: '{{ $randomString() }} - Load test message at {{ $timestamp }}'
+                    conversationId: '{{ conversationId }}'
+                headers:
+                    Authorization: 'Bearer {{ token }}'
+                expect:
+                    - statusCode: 200
+                    - hasProperty: success
+                think: 1
+
+          # Step 8: Get messages
+          - get:
+                url: '/api/messages/{{ conversationId }}'
+                headers:
+                    Authorization: 'Bearer {{ token }}'
+                expect:
+                    - statusCode: 200
+                    - contentType: json
+                think: 2
+
+          # Step 9: Search messages
+          - get:
+                url: '/api/messages/search?q=test'
+                headers:
+                    Authorization: 'Bearer {{ token }}'
+                expect:
+                    - statusCode: 200
+                think: 1
+
+    # Authentication focused scenario
+    - name: 'Authentication Load Test'
+      weight: 15
+      flow:
+          - function: 'generateUserCredentials'
+          - post:
+                url: '/api/auth/register'
+                json:
+                    username: '{{ username }}'
+                    email: '{{ email }}'
+                    password: '{{ password }}'
+                expect:
+                    - statusCode: [201, 400] # 400 if user already exists
+                think: 1
+
+          - post:
+                url: '/api/auth/login'
+                json:
+                    email: '{{ email }}'
+                    password: '{{ password }}'
+                capture:
+                    - regex: '"accessToken":"([^"]+)"'
+                      as: 'token'
+                expect:
+                    - statusCode: 200
+                    - hasProperty: accessToken
+                think: 1
+
+          - get:
+                url: '/api/auth/me'
+                headers:
+                    Authorization: 'Bearer {{ token }}'
+                expect:
+                    - statusCode: 200
+                think: 1
+
+          - post:
+                url: '/api/auth/refresh'
+                headers:
+                    Authorization: 'Bearer {{ token }}'
+                capture:
+                    - regex: '"accessToken":"([^"]+)"'
+                      as: 'newToken'
+                expect:
+                    - statusCode: 200
+                think: 1
+
+          - post:
+                url: '/api/auth/logout'
+                headers:
+                    Authorization: 'Bearer {{ newToken }}'
+                expect:
+                    - statusCode: 200
+
+    # Message sending focused scenario
+    - name: 'Message Intensive Load Test'
+      weight: 10
+      flow:
+          - function: 'generateUserCredentials'
+          - post:
+                url: '/api/auth/login'
+                json:
+                    email: '{{ email }}'
+                    password: '{{ password }}'
+                capture:
+                    - regex: '"accessToken":"([^"]+)"'
+                      as: 'token'
+                think: 1
+
+          - get:
+                url: '/api/conversations'
+                headers:
+                    Authorization: 'Bearer {{ token }}'
+                capture:
+                    - json: '$.data.conversations[0].id'
+                      as: 'conversationId'
+                think: 1
+
+          # Send multiple messages rapidly
+          - loop:
+                - post:
+                      url: '/api/messages/send'
+                      json:
+                          content: 'Load test message {{ $loopCount }} - {{ $timestamp }}'
+                          conversationId: '{{ conversationId }}'
+                      headers:
+                          Authorization: 'Bearer {{ token }}'
+                      expect:
+                          - statusCode: 200
+                - think: 0.5
+            count: 5
+
+          - get:
+                url: '/api/messages/{{ conversationId }}'
+                headers:
+                    Authorization: 'Bearer {{ token }}'
+                expect:
+                    - statusCode: 200
+
+    # Read-only operations scenario
+    - name: 'Read-Only Load Test'
+      weight: 5
+      flow:
+          - function: 'generateUserCredentials'
+          - post:
+                url: '/api/auth/login'
+                json:
+                    email: '{{ email }}'
+                    password: '{{ password }}'
+                capture:
+                    - regex: '"accessToken":"([^"]+)"'
+                      as: 'token'
+                think: 1
+
+          - get:
+                url: '/api/health'
+                expect:
+                    - statusCode: 200
+                think: 1
+
+          - get:
+                url: '/api/auth/me'
+                headers:
+                    Authorization: 'Bearer {{ token }}'
+                expect:
+                    - statusCode: 200
+                think: 1
+
+          - get:
+                url: '/api/user/list'
+                headers:
+                    Authorization: 'Bearer {{ token }}'
+                expect:
+                    - statusCode: 200
+                think: 2
+
+          - get:
+                url: '/api/conversations'
+                headers:
+                    Authorization: 'Bearer {{ token }}'
+                expect:
+                    - statusCode: 200
+                think: 2
+
+          - get:
+                url: '/api/messages/search?q={{ $randomString() }}'
+                headers:
+                    Authorization: 'Bearer {{ token }}'
+                expect:
+                    - statusCode: 200
+                think: 1

@@ -23,8 +23,14 @@
     "description": "Real-time messaging system with Node.js",
     "main": "src/index.js",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "start": "node src/index.js",
+        "load-test": "artillery run load-test.yml",
+        "load-test:report": "artillery run --output report.json load-test.yml && artillery report report.json"
     },
     "author": "onurcansevinc",
-    "license": "ISC"
+    "license": "ISC",
+    "devDependencies": {
+        "artillery": "^2.0.0"
+    }
 }
